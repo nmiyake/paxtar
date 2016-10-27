@@ -49,8 +49,8 @@ type formatter struct {
 // NewWriter creates a new Writer writing to w.
 func NewWriter(w io.Writer) *Writer { return &Writer{w: w} }
 
-// NewWriterPreferPax creates a new Writer writing to w with preferPax set to true.
-func NewWriterPreferPax(w io.Writer) *Writer { return &Writer{w: w, preferPax: true} }
+// NewPaxWriter creates a new Writer writing to w using PAX headers.
+func NewPaxWriter(w io.Writer) *Writer { return &Writer{w: w, preferPax: true} }
 
 // Flush finishes writing the current file (optional).
 func (tw *Writer) Flush() error {
