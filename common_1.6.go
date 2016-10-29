@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package paxtar implements access to tar archives.
+// Package tar implements access to tar archives.
 // It aims to cover most of the variations, including those produced
 // by GNU and BSD tars.
 //
@@ -11,7 +11,7 @@
 //   http://www.gnu.org/software/tar/manual/html_node/Standard.html
 //   http://pubs.opengroup.org/onlinepubs/9699919799/utilities/pax.html
 
-// +build go1.7
+// +build !go1.7
 
 package paxtar
 
@@ -24,8 +24,10 @@ import (
 	"time"
 )
 
-// Header type flags.
 const (
+	blockSize = 512
+
+	// Types
 	TypeReg           = '0'    // regular file
 	TypeRegA          = '\x00' // regular file
 	TypeLink          = '1'    // hard link
@@ -61,6 +63,12 @@ type Header struct {
 	ChangeTime time.Time // status change time
 	Xattrs     map[string]string
 }
+
+// File name constants from the tar spec.
+const (
+	fileNameSize       = 100 // Maximum number of bytes in a standard tar name.
+	fileNamePrefixSize = 155 // Maximum number of ustar extension bytes.
+)
 
 // FileInfo returns an os.FileInfo for the Header.
 func (h *Header) FileInfo() os.FileInfo {
@@ -272,6 +280,33 @@ func FileInfoHeader(fi os.FileInfo, link string) (*Header, error) {
 		return h, sysStat(fi, h)
 	}
 	return h, nil
+}
+
+var zeroBlock = make([]byte, blockSize)
+
+// POSIX specifies a sum of the unsigned byte values, but the Sun tar uses signed byte values.
+// We compute and return both.
+func checksum(header []byte) (unsigned int64, signed int64) {
+	for i := 0; i < len(header); i++ {
+		if i == 148 {
+			// The chksum field (header[148:156]) is special: it should be treated as space bytes.
+			unsigned += ' ' * 8
+			signed += ' ' * 8
+			i += 7
+			continue
+		}
+		unsigned += int64(header[i])
+		signed += int64(int8(header[i]))
+	}
+	return
+}
+
+type slicer []byte
+
+func (sp *slicer) next(n int) (b []byte) {
+	s := *sp
+	b, *sp = s[0:n], s[n:]
+	return
 }
 
 func isASCII(s string) bool {
