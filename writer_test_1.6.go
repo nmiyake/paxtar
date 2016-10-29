@@ -109,9 +109,9 @@ var writerTests = []*writerTest{
 	},
 	// The truncated test file was produced using these commands:
 	//   dd if=/dev/zero bs=1048576 count=16384 > (longname/)*15 /16gig.txt
-	//   tar -b 1 -c -f- (longname/)*15 /16gig.txt | dd bs=512 count=8 > writer-big-long.tar
+	//   tar -b 1 -c -f- (longname/)*15 /16gig.txt | dd bs=512 count=8 > writer-big-long-1.6.tar
 	{
-		file: "testdata/writer-big-long.tar",
+		file: "testdata/writer-big-long-1.6.tar",
 		entries: []*writerTestEntry{
 			{
 				header: &Header{
